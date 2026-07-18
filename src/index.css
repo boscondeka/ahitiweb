@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 340 80% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 340 80% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 80% 20%;
+    --primary: 340 82% 33%;
+    --primary-foreground: 50 80% 90%;
+    --secondary: 50 80% 76%;
+    --secondary-foreground: 340 82% 33%;
+    --muted: 50 40% 90%;
+    --muted-foreground: 340 40% 40%;
+    --accent: 50 80% 76%;
+    --accent-foreground: 340 82% 33%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 340 30% 80%;
+    --input: 340 30% 80%;
+    --ring: 340 82% 33%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 340 5.3% 26.1%;
+    --sidebar-primary: 340 82% 33%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 50 80% 76%;
+    --sidebar-accent-foreground: 340 82% 33%;
+    --sidebar-border: 340 13% 91%;
+    --sidebar-ring: 340 82% 33%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#941841] to-[#c41e5a];
+  }
+  .bg-ahiti-primary {
+    background-color: #941841;
+  }
+  .bg-ahiti-secondary {
+    background-color: #F1E895;
+  }
+  .text-ahiti-primary {
+    color: #941841;
+  }
+  .text-ahiti-secondary {
+    color: #F1E895;
+  }
+  .border-ahiti-primary {
+    border-color: #941841;
+  }
+  .border-ahiti-secondary {
+    border-color: #F1E895;
+  }
+}
