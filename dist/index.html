@@ -4,8 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AHITI NDOMBA - Animal Health Training Institute</title>
-    <script type="module" crossorigin src="./assets/index-DyVV_A9C.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DW4Rr9lm.css">
+    <script>
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-Bzy2gaSP.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-5YRH2Sm0.css">
   </head>
   <body>
     <div id="root"></div>
