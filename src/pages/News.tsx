@@ -1,268 +1,110 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Calendar, ArrowRight, ExternalLink, User, Tag,
-  Search
+  Search, Loader2, AlertCircle
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { fetchNews, fetchCategories, formatNewsDate, type NewsArticle, type NewsCategory } from '@/lib/newsApi'
 
 const News = () => {
-  const [selectedNews, setSelectedNews] = useState<any>(null)
+  const [selectedNews, setSelectedNews] = useState<NewsArticle | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [newsItems, setNewsItems] = useState<NewsArticle[]>([])
+  const [categories, setCategories] = useState<NewsCategory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  // const [hasMore, setHasMore] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const ITEMS_PER_PAGE = 12
 
-  const categories = ['All', 'Government', 'Milestone', 'Admission', 'Courses', 'Events']
-
-  const newsItems = [
-    {
-      date: 'April 3, 2025',
-      author: 'Kenya News Agency',
-      title: 'President Ruto Launches Goat AI Center at AHITI Ndomba',
-      excerpt: 'President William Ruto officially commissioned the Goat Artificial Insemination Centre at AHITI Ndomba in Kirinyaga County, marking a historic milestone as the first facility of its kind in East and Central Africa.',
-      content: `President William Ruto officially commissioned the Goat Artificial Insemination Centre at AHITI Ndomba in Kirinyaga County, marking a historic milestone as the first facility of its kind in East and Central Africa.
-
-The Centre, located at Animal Health & Industrial Training Institute (AHITI), Ndomba in Kirinyaga, brings a radical breakthrough in the County and the Country's agricultural sector, especially in goat farming.
-
-During the event, Kirinyaga Governor Anne Waiguru expressed gratitude for the transformative initiative, highlighting the positive impact it would have on local farming communities and the wider economy.
-
-"We are particularly honoured to host the Goat AI Centre at Ndomba, which is not only a great treasure for our County but also a key development milestone for our Country. This Center is a significant step forward in improving goat production and food security in Kirinyaga County."
-
-The Governor noted that the Centre's role in improving breeding practices is critical to advancing food security and economic stability for local farmers. She further emphasized the importance of goat farming to the county's agricultural ecosystem, which benefits from both meat and milk production, offering a sustainable source of income and nutrition for many families.
-
-The Goat AI Center is part of a broader effort to transform the agricultural sector in Kirinyaga, highlighting that the County has trained AI inseminators who assist farmers with timely and efficient services.
-
-The Governor emphasized that the County government has been actively sensitizing farmers on the importance of AI in livestock production and making AI services more accessible through subsidies that significantly reduce the cost compared to private sector rates.`,
-      category: 'Milestone',
-      image: '/images/1_President_Ruto_s_Full_Speech_During.png',
-      source: 'Kenya News Agency',
-      sourceUrl: 'https://www.kenyanews.go.ke/kirinyaga-farmers-optimistic-as-president-launches-goat-ai-center/'
-    },
-    {
-      date: 'April 14, 2026',
-      author: 'State Department for Livestock Development',
-      title: 'Government Opens 2026 Training Intake for Livestock Courses',
-      excerpt: 'The State Department for Livestock Development has announced applications for 2026 training programmes targeting students across different KCSE performance levels.',
-      content: `The State Department for Livestock Development has announced applications for 2026 training programmes targeting students across different KCSE performance levels, including those with C plain and below.
-
-The opportunities cover diploma, certificate, and artisan pathways in animal health, dairy, meat, leather, apiculture, and range management.
-
-The Ministry of Agriculture and Livestock Development says applicants can choose institutions under the department, including AHITI campuses, Dairy Training Institute Naivasha, and Meat Training Institute Athi River.
-
-**Institutions and Application Deadlines**
-
-Courses are available at these institutions:
-- Animal Health and Industry Training Institute (AHITI) Kabete
-- Animal Health and Industry Training Institute (AHITI) Nyahururu
-- Animal Health and Industry Training Institute (AHITI) Ndomba
-- Dairy Training Institute (DTI) Naivasha
-- Meat Training Institute (MTI) Athi River
-- Livestock Training Institute (LTI) Wajir
-- Livestock Training Institute (LTI) Mogotio
-- National Beekeeping Institute Lenana
-
-Applications should be submitted to the principal of the preferred institution.
-
-**General Application Requirements**
-
-Applicants must submit a complete application package and pay a non-refundable KSh 1,000 application fee using the payment instructions provided by each institution.
-
-Required attachments include:
-- Copies of academic certificates
-- National ID (or relevant identification document)
-- Secondary school leaving certificate
-- Birth certificate
-- Two recent passport-size photos
-
-**Key Diploma Options for 2026**
-
-Diploma in Animal Health and Production is offered at AHITI Kabete, AHITI Ndomba, and AHITI Nyahururu with a duration of 2½ years (5 semesters) at KSh 210,300.
-
-Upgrading Course to Diploma in Animal Health and Production is available at AHITI Nyahururu, AHITI Ndomba, and Livestock Training Institute Wajir for 1 year (3 semesters) at KSh 111,300.`,
-      category: 'Admission',
-      image: '/images/2_Department_of_Animal_Health_and_Production.png',
-      source: 'EduPoa',
-      sourceUrl: 'https://edupoa.com/blog/govt-opens-2026-livestock-training-intake-for-diploma-certificate-and-artisan-levels/'
-    },
-    {
-      date: 'February 17, 2025',
-      author: 'African Agribusiness',
-      title: 'Kenya Introduces AI in Goats to Improve Dairy and Meat Production',
-      excerpt: 'The Kenya Animal Genetic Resources Centre (KAGRC) is taking a bold step in transforming the country\'s dairy and meat production through AI technology for goats.',
-      content: `The Kenya Animal Genetic Resources Centre (KAGRC) is taking a bold step in transforming the country's dairy and meat production through the introduction of Artificial Insemination (AI) technology for goats.
-
-In an effort to boost productivity and enhance food security, KAGRC is working closely with farmers to implement selective breeding techniques that will improve the quality and quantity of milk and meat production in the country.
-
-Speaking during an open day event with goat dairy farmers at the Kutus AHITI Domba centre, Kirinyaga County, KAGRC Managing Director Benadette Misoi emphasised the importance of AI in modern farming, describing it as a groundbreaking technology that will help farmers maximise their yields.
-
-"Today is a great day for us as we engage with goat dairy farmers, a key segment of livestock farming. AI in goats is a new technology that we are trying to introduce to farmers, with the main objective of increasing productivity. Through selective breeding, we are producing the best semen from our top breeds to ensure higher milk production and better quality meat," said Misoi.
-
-She explained that KAGRC has a variety of male breeds at its stations, which are used to produce high-quality semen for artificial insemination. The focus is on both dairy and meat breeds, ensuring that farmers have access to superior genetic material that will enhance their herds.
-
-Misoi expressed her delight at the large turnout of farmers, noting that the interaction was vital in equipping them with essential information about the new technology.
-
-"We are happy to see farmers showing great interest in this initiative. Information is power, and we want to continue passing it on to ensure that farmers make informed decisions. KAGRC works with a network of agents, distributors, universities, and suppliers who provide the necessary chemicals and equipment for our laboratories. It is a collaborative effort that will drive this sector forward," she said.
-
-The Kenyan government, through the Ministry of Agriculture, has outlined ambitious goals to enhance food security and promote livestock breeding as key interventions.`,
-      category: 'Government',
-      image: '/images/1_Successful_Artificial_Insemination.png',
-      source: 'African Agribusiness',
-      sourceUrl: 'https://africanagribusiness.com/kenya-introduces-ai-in-goats-to-improve-dairy-and-meat-production/4239/'
-    },
-    {
-      date: 'April 1, 2025',
-      author: 'KAGRC',
-      title: 'Commissioning of the Goat Artificial Insemination Centre',
-      excerpt: 'William Samoei Ruto, PhD., CGH, officially commissioned the Goat Artificial Insemination Centre in Ndomba, Kirinyaga County.',
-      content: `William Samoei Ruto, PhD., CGH, officially commissioned the Goat Artificial Insemination Centre in Ndomba, Kirinyaga County, on April 2, 2025.
-
-The Centre represents a significant investment by the Kenyan government in livestock development, specifically targeting the improvement of goat breeds for enhanced dairy and meat production.
-
-The facility at AHITI Ndomba will serve as a regional hub for goat artificial insemination services, providing training, semen production, and technical support to farmers across East and Central Africa.
-
-This milestone achievement aligns with the government's Bottom-Up Economic Transformation Agenda (BETA) and the broader vision of enhancing food security and agricultural productivity in Kenya.
-
-The Centre will work closely with the Kenya Animal Genetic Resources Centre (KAGRC) to ensure the availability of high-quality genetic material and the training of skilled inseminators.`,
-      category: 'Government',
-      image: '/images/4_Building_a_More_Resilient_Livestock.png',
-      source: 'KAGRC',
-      sourceUrl: 'https://kagrc.go.ke/commissioning-of-the-goat-artificial-insemination-centre/'
-    },
-    {
-      date: 'March 15, 2025',
-      author: 'AHITI Ndomba',
-      title: 'Short Courses Registration Now Open',
-      excerpt: 'Registration is now open for our practical short courses including Artificial Insemination, Poultry Farming, Bee Farming, and more.',
-      content: `AHITI Ndomba is pleased to announce that registration for our short courses is now open. These practical courses are designed to provide hands-on training for farmers, extension workers, and anyone interested in improving their livestock management skills.
-
-**Available Short Courses:**
-
-1. **Artificial Insemination in Cattle** (4 weeks)
-   - Comprehensive training in cattle AI techniques
-   - Hands-on practical sessions
-   - Certificate upon completion
-
-2. **Artificial Insemination in Goats** (2 weeks)
-   - Specialized goat AI training
-   - Practical demonstrations
-   - Expert instructors
-
-3. **Feed Formulation and Milling Technology** (5 days)
-   - Learn to formulate balanced animal feeds
-   - Feed processing techniques
-   - Quality control measures
-
-4. **Poultry Farming** (5 days)
-   - Complete poultry management
-   - Health and nutrition
-   - Marketing strategies
-
-5. **Bee Farming (Apiculture)** (5 days)
-   - Modern beekeeping techniques
-   - Honey harvesting and processing
-   - Value addition
-
-6. **Beef Fattening and Feedlot Management** (5 days)
-   - Profitable beef production
-   - Feedlot management
-   - Marketing
-
-All courses include practical sessions at our demonstration farm. For registration and inquiries, please contact the Registrar's office or visit our website.`,
-      category: 'Courses',
-      image: '/images/3_Vet_Treks_Is_Heading_In_A_New_Direction.png',
-      source: 'AHITI Ndomba',
-      sourceUrl: '#'
-    },
-    {
-      date: 'January 20, 2025',
-      author: 'State Department for Livestock Development',
-      title: 'Digital Livestock Registration Exercise at AHITI Ndomba',
-      excerpt: 'Catherine and a team from the Animal Health Department conducted a digital livestock registration exercise at AHITI Ndomba farm.',
-      content: `The State Department for Livestock Development, through the Directorate of Veterinary Services, conducted a digital livestock registration exercise at AHITI Ndomba farm.
-
-Led by Dr. Kihara from the Animal Health Department, the exercise aimed to digitize livestock records at the institute's demonstration farm, enhancing data management and traceability.
-
-The digital registration system will help in:
-- Improved livestock tracking and management
-- Better disease surveillance
-- Enhanced breeding records
-- Accurate production statistics
-- Compliance with international standards
-
-This initiative is part of the government's broader strategy to modernize livestock management in Kenya and align with international best practices in animal health and production.
-
-AHITI Ndomba continues to serve as a model training institution, embracing modern technologies to enhance the quality of training provided to students.`,
-      category: 'Government',
-      image: '/images/6_Researching_and_analysing_the_Kenya.png',
-      source: 'X (Twitter) - AHITI Ndomba',
-      sourceUrl: 'https://x.com/AhitiNdomba'
-    },
-    {
-      date: 'December 15, 2024',
-      author: 'AHITI Ndomba',
-      title: 'End of Year Graduation Ceremony',
-      excerpt: 'AHITI Ndomba celebrated the graduation of over 150 students from various programs.',
-      content: `AHITI Ndomba proudly celebrated the graduation of over 150 students from various diploma and certificate programs at the end-of-year graduation ceremony held at the institute.
-
-The graduating class included:
-- 80 Diploma in Animal Health and Production graduates
-- 50 Certificate in Animal Health and Production graduates
-- 20 Upgrading Certificate to Diploma graduates
-
-The Chief Guest, representing the State Department for Livestock Development, congratulated the graduates and urged them to apply the knowledge and skills gained to transform the livestock sector in Kenya.
-
-"You are now equipped with the skills to make a real difference in our communities. Go out there and be ambassadors of excellence in animal health and production," the Chief Guest said.
-
-The Principal, Mr. G.W. Silfuna, highlighted the institute's achievements over the past year, including improved pass rates, enhanced practical training facilities, and increased enrollment.
-
-Several outstanding students received awards for academic excellence and exemplary performance in practical skills.
-
-The ceremony concluded with a call for the graduates to maintain high professional standards and contribute to the sustainable development of the livestock sub-sector.`,
-      category: 'Events',
-      image: '/images/5_Graduants_fears_headache_amid_unemployment.png',
-      source: 'AHITI Ndomba',
-      sourceUrl: '#'
-    },
-    {
-      date: 'November 10, 2024',
-      author: 'Kenya Veterinary Board',
-      title: 'AHITI Ndomba Maintains Accreditation Status',
-      excerpt: 'The Kenya Veterinary Board has renewed AHITI Ndomba\'s accreditation for all animal health training programs.',
-      content: `The Kenya Veterinary Board (KVB) has renewed AHITI Ndomba's accreditation for all animal health training programs following a comprehensive inspection and evaluation.
-
-The accreditation covers:
-- Diploma in Animal Health and Production
-- Certificate in Animal Health and Production
-- Upgrading Certificate to Diploma
-- All short courses in animal health
-
-The KVB inspection team commended the institute for:
-- Maintaining high standards in curriculum delivery
-- Excellent practical training facilities
-- Qualified and dedicated teaching staff
-- Good student-teacher ratios
-- Adequate learning resources
-- Proper record keeping
-
-The Principal expressed gratitude to the KVB for the recognition and assured that the institute will continue to uphold the highest standards of training.
-
-"This accreditation is a testament to our commitment to quality education. We will continue to invest in our facilities and staff to ensure our graduates are well-prepared for the industry," the Principal said.
-
-Students and prospective applicants are assured that qualifications from AHITI Ndomba are recognized and respected both locally and internationally.`,
-      category: 'Milestone',
-      image: '/images/5_The_Role_of_Ministry_of_Agriculture.png',
-      source: 'Kenya Veterinary Board',
-      sourceUrl: 'https://kenyavetboard.or.ke'
+  // Fetch full article when a news card is clicked
+  const BASE_API = import.meta.env.VITE_BASE_API_URL ;
+  async function handleNewsClick(newsItem: NewsArticle) {
+    try {
+      
+      const apiUrl = `${BASE_API}/api/news`
+      // Fetch full article by slug to get the content
+      const response = await fetch(`${apiUrl}?slug=${newsItem.slug}`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setSelectedNews(data.data);
+      } else {
+        // Fallback to the list item (without full content)
+        setSelectedNews(newsItem);
+      }
+    } catch (error) {
+      console.error('Failed to fetch full article:', error);
+      // Fallback to the list item
+      setSelectedNews(newsItem);
     }
-  ]
+  }
 
-  const filteredNews = newsItems.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+  // Load categories on mount
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const cats = await fetchCategories()
+        setCategories(cats)
+      } catch (err) {
+        console.error('Failed to load categories:', err)
+      }
+    }
+    loadCategories()
+  }, [])
+
+  // Load news articles
+  useEffect(() => {
+    async function loadNews() {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const params: any = {
+          limit: ITEMS_PER_PAGE,
+          offset: (currentPage - 1) * ITEMS_PER_PAGE,
+        }
+
+        if (selectedCategory !== 'All') {
+          params.category = selectedCategory.toLowerCase()
+        }
+
+        if (searchTerm) {
+          params.search = searchTerm
+        }
+
+        const response = await fetchNews(params)
+        setNewsItems(response.data)
+        // setHasMore(response.pagination.hasMore)
+        setTotalItems(response.pagination.total)
+      } catch (err) {
+        console.error('Failed to load news:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load news')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      loadNews()
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, selectedCategory, currentPage])
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory])
+
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE)
+
+  const categoryLabels = ['All', ...categories.map(c => c.label)]
 
   return (
     <div className="pt-20">
@@ -292,14 +134,16 @@ Students and prospective applicants are assured that qualifications from AHITI N
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                disabled={loading}
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
+              {categoryLabels.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-50 ${
                     selectedCategory === category
                       ? 'bg-ahiti-primary text-white'
                       : 'bg-white text-gray-700 hover:bg-ahiti-primary/10'
@@ -316,27 +160,59 @@ Students and prospective applicants are assured that qualifications from AHITI N
       {/* News Grid */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {filteredNews.length > 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-ahiti-primary" />
+              <span className="ml-3 text-gray-600">Loading news...</span>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+              <p className="text-red-600 text-lg mb-2">Failed to load news</p>
+              <p className="text-gray-500 text-sm mb-4">{error}</p>
+              <Button 
+                onClick={() => window.location.reload()}
+                className="bg-ahiti-primary text-white"
+              >
+                Try Again
+              </Button>
+            </div>
+          ) : newsItems.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredNews.map((news, index) => (
+              {newsItems.map((news) => (
                 <article
-                  key={index}
+                  key={news.id}
                   className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow border border-gray-100 cursor-pointer"
-                  onClick={() => setSelectedNews(news)}
+                  onClick={() => handleNewsClick(news)}
                 >
-                  <div className="h-48 overflow-hidden">
-                    <img
-                      src={news.image}
-                      alt={news.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
+                  {news.coverImage && (
+                    <div className="aspect-video overflow-hidden bg-gray-200">
+                      <img
+                        src={news.coverImage}
+                        alt={news.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          // Hide image if it fails to load
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <Badge className="bg-ahiti-secondary text-ahiti-primary">{news.category}</Badge>
+                      {news.category && (
+                        <Badge 
+                          style={{ 
+                            backgroundColor: `${news.category.color}20`,
+                            color: news.category.color 
+                          }}
+                        >
+                          {news.category.label}
+                        </Badge>
+                      )}
                       <div className="flex items-center text-gray-500 text-sm">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {news.date}
+                        {formatNewsDate(news.publishedDate || news.dates.created)}
                       </div>
                     </div>
                     <h3 className="text-lg font-bold text-ahiti-primary mb-3 line-clamp-2">
@@ -348,7 +224,7 @@ Students and prospective applicants are assured that qualifications from AHITI N
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-gray-500 text-sm">
                         <User className="w-4 h-4 mr-1" />
-                        {news.author}
+                        {news.author || news.source?.name || 'AHITI Ndomba'}
                       </div>
                       <Button variant="link" className="p-0 text-ahiti-primary hover:text-ahiti-dark">
                         Read More
@@ -362,6 +238,66 @@ Students and prospective applicants are assured that qualifications from AHITI N
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">No news found matching your criteria.</p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-12">
+              <Button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                className="border-ahiti-primary text-ahiti-primary hover:bg-ahiti-primary hover:text-white disabled:opacity-50"
+              >
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      className={currentPage === pageNum 
+                        ? "bg-ahiti-primary text-white hover:bg-ahiti-dark" 
+                        : "border-ahiti-primary text-ahiti-primary hover:bg-ahiti-primary hover:text-white"
+                      }
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                variant="outline"
+                className="border-ahiti-primary text-ahiti-primary hover:bg-ahiti-primary hover:text-white disabled:opacity-50"
+              >
+                Next
+              </Button>
+            </div>
+          )}
+
+          {/* Results info */}
+          {!loading && !error && newsItems.length > 0 && (
+            <div className="text-center mt-6 text-gray-500 text-sm">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} of {totalItems} articles
             </div>
           )}
         </div>
@@ -428,44 +364,94 @@ Students and prospective applicants are assured that qualifications from AHITI N
       </section>
 
       {/* News Detail Modal */}
-      <Dialog open={!!selectedNews} onOpenChange={() => setSelectedNews(null)}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-          {selectedNews && (
-            <>
-              <div className="h-64 -mx-6 -mt-6 mb-6 overflow-hidden">
-                <img
-                  src={selectedNews.image}
-                  alt={selectedNews.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <DialogHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-ahiti-secondary text-ahiti-primary">{selectedNews.category}</Badge>
-                  <span className="text-gray-500 text-sm flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {selectedNews.date}
-                  </span>
+      {selectedNews && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setSelectedNews(null)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative z-50 w-full max-w-3xl max-h-[90vh] bg-white rounded-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedNews(null)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-md transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto max-h-[90vh]">
+              {/* Cover Image */}
+              {selectedNews.coverImage && (
+                <div className="w-full aspect-video overflow-hidden bg-gray-200">
+                  <img
+                    src={selectedNews.coverImage}
+                    alt={selectedNews.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
                 </div>
-                <DialogTitle className="text-ahiti-primary text-2xl">{selectedNews.title}</DialogTitle>
-              </DialogHeader>
-              <div className="py-4">
-                <div className="flex items-center text-gray-500 text-sm mb-4">
-                  <User className="w-4 h-4 mr-1" />
-                  By {selectedNews.author}
+              )}
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Header */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    {selectedNews.category && (
+                      <Badge 
+                        style={{ 
+                          backgroundColor: `${selectedNews.category.color}20`,
+                          color: selectedNews.category.color 
+                        }}
+                      >
+                        {selectedNews.category.label}
+                      </Badge>
+                    )}
+                    <span className="text-gray-500 text-sm flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {formatNewsDate(selectedNews.publishedDate || selectedNews.dates.created)}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-ahiti-primary mb-2">
+                    {selectedNews.title}
+                  </h2>
+                  <div className="flex items-center text-gray-500 text-sm">
+                    <User className="w-4 h-4 mr-1" />
+                    By {selectedNews.author || selectedNews.source?.name || 'AHITI Ndomba'}
+                  </div>
                 </div>
+
+                {/* Body */}
                 <div className="prose prose-gray max-w-none">
-                  {selectedNews.content.split('\n\n').map((paragraph: string, idx: number) => (
-                    <p key={idx} className="text-gray-600 mb-4 whitespace-pre-line">
-                      {paragraph}
+                  {selectedNews.content ? (
+                    selectedNews.content.split('\n\n').map((paragraph: string, idx: number) => (
+                      <p key={idx} className="text-gray-600 mb-4 whitespace-pre-line">
+                        {paragraph}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-gray-600 mb-4">
+                      {selectedNews.excerpt || 'No content available.'}
                     </p>
-                  ))}
+                  )}
                 </div>
-                {selectedNews.sourceUrl && (
+
+                {/* Source Link */}
+                {selectedNews.source?.url && (
                   <div className="mt-6 pt-6 border-t">
-                    <p className="text-sm text-gray-500 mb-2">Source: {selectedNews.source}</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Source: {selectedNews.source.name || 'External Source'}
+                    </p>
                     <a 
-                      href={selectedNews.sourceUrl}
+                      href={selectedNews.source.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center text-ahiti-primary hover:underline"
@@ -476,10 +462,10 @@ Students and prospective applicants are assured that qualifications from AHITI N
                   </div>
                 )}
               </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

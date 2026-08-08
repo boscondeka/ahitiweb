@@ -7,9 +7,12 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { fetchNews, formatNewsDate, type NewsArticle } from '@/lib/newsApi'
 
 const Home = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [latestNews, setLatestNews] = useState<NewsArticle[]>([])
+  const [newsLoading, setNewsLoading] = useState(true)
 
   const heroImages = [
     '/images/DJI_0033@1129346556.jpg',
@@ -23,6 +26,22 @@ const Home = () => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length)
     }, 5000)
     return () => clearInterval(interval)
+  }, [])
+
+  // Fetch latest 3 news articles
+  useEffect(() => {
+    async function loadLatestNews() {
+      try {
+        setNewsLoading(true)
+        const response = await fetchNews({ limit: 3, offset: 0 })
+        setLatestNews(response.data)
+      } catch (error) {
+        console.error('Failed to load latest news:', error)
+      } finally {
+        setNewsLoading(false)
+      }
+    }
+    loadLatestNews()
   }, [])
 
   const regularCourses = [
@@ -43,30 +62,6 @@ const Home = () => {
       duration: '5 days - 4 weeks',
       description: 'Practical training in AI, Poultry, Bee Farming, and more.',
       icon: Award
-    }
-  ]
-
-  const newsItems = [
-    {
-      date: 'April 3, 2025',
-      title: 'President Ruto Launches Goat AI Center at AHITI Ndomba',
-      excerpt: 'The Centre, located at AHITI Ndomba in Kirinyaga, is the first of its kind in East and Central Africa.',
-      category: 'Milestone',
-      image: '/images/IMG_0588@1362214849.jpg'
-    },
-    {
-      date: 'April 14, 2026',
-      title: 'Government Opens 2026 Training Intake',
-      excerpt: 'The State Department for Livestock Development announces applications for diploma and certificate courses.',
-      category: 'Admission',
-      image: '/images/IMG_0712@-1363690268.jpg'
-    },
-    {
-      date: 'February 28, 2025',
-      title: 'Short Courses Registration Ongoing',
-      excerpt: 'Register now for practical short courses including Artificial Insemination and Poultry Farming.',
-      category: 'Courses',
-      image: '/images/IMG_0716-1@-1369504436.jpg'
     }
   ]
 
@@ -311,43 +306,77 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {newsItems.map((news, index) => (
-              <article
-                key={index}
-                className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow border border-gray-100"
-              >
-                <div className="h-48 overflow-hidden">
-                  <img
-                    src={news.image}
-                    alt={news.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge className="bg-ahiti-secondary text-ahiti-primary">{news.category}</Badge>
-                    <div className="flex items-center text-gray-500 text-sm">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {news.date}
-                    </div>
+          {newsLoading ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 animate-pulse">
+                  <div className="h-48 bg-gray-200"></div>
+                  <div className="p-6">
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                    <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                   </div>
-                  <h3 className="text-lg font-bold text-ahiti-primary mb-3 line-clamp-2">
-                    {news.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {news.excerpt}
-                  </p>
-                  <Button variant="link" className="p-0 text-ahiti-primary hover:text-ahiti-dark" asChild>
-                    <Link to="/news">
-                      Read More
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </Link>
-                  </Button>
                 </div>
-              </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : latestNews.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {latestNews.map((news) => (
+                <article
+                  key={news.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow border border-gray-100"
+                >
+                  {news.coverImage && (
+                    <div className="aspect-video overflow-hidden bg-gray-200">
+                      <img
+                        src={news.coverImage}
+                        alt={news.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      {news.category && (
+                        <Badge 
+                          style={{
+                            backgroundColor: `${news.category.color}20`,
+                            color: news.category.color
+                          }}
+                        >
+                          {news.category.label}
+                        </Badge>
+                      )}
+                      <div className="flex items-center text-gray-500 text-sm">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {formatNewsDate(news.publishedDate || news.dates.created)}
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-ahiti-primary mb-3 line-clamp-2">
+                      {news.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {news.excerpt}
+                    </p>
+                    <Button variant="link" className="p-0 text-ahiti-primary hover:text-ahiti-dark" asChild>
+                      <Link to="/news">
+                        Read More
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
+                    </Button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No news articles available at the moment.</p>
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Button variant="outline" className="border-ahiti-primary text-ahiti-primary hover:bg-ahiti-primary hover:text-white" asChild>

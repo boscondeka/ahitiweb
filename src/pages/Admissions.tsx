@@ -5,10 +5,11 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
+// import { Input } from '@/components/ui/input'
+// import { Label } from '@/components/ui/label'
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Link } from 'react-router-dom'
+const BASE_API = `${import.meta.env.VITE_BASE_API_URL}/apply`
 const Admissions = () => {
 
   const intakeDates = [
@@ -146,8 +147,8 @@ const Admissions = () => {
               <TabsTrigger value="intakes" className="data-[state=active]:bg-ahiti-primary data-[state=active]:text-white">
                 Intakes
               </TabsTrigger>
-              <TabsTrigger value="apply" className="data-[state=active]:bg-ahiti-primary data-[state=active]:text-white">
-                Apply Online
+              <TabsTrigger value="" className="data-[state=active]:bg-ahiti-primary data-[state=active]:text-white">
+                             <Link to={BASE_API}>Apply Online</Link>
               </TabsTrigger>
             </TabsList>
 
@@ -283,7 +284,7 @@ const Admissions = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="apply">
+            {/* <TabsContent value="apply">
               <div className="bg-white rounded-2xl p-8 shadow-lg max-w-2xl mx-auto">
                 <h3 className="text-xl font-bold text-ahiti-primary mb-6 text-center">Online Application</h3>
                 <form className="space-y-6">
@@ -344,7 +345,7 @@ const Admissions = () => {
                   </p>
                 </form>
               </div>
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </div>
       </section>

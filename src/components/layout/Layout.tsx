@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { Menu, X, LogIn, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Building2 } from 'lucide-react'
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+// import { Input } from '@/components/ui/input'
+// import { Label } from '@/components/ui/label'
+// import { Building2 } from 'lucide-react'
 
 const Layout = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  // const [setIsLoginOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false)
   const location = useLocation()
@@ -26,6 +26,8 @@ const Layout = () => {
     setIsMenuOpen(false)
     window.scrollTo(0, 0)
   }, [location.pathname])
+
+const BASE_API = import.meta.env.VITE_BASE_API_URL  || 'http://localhost:3000';
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -119,12 +121,13 @@ const Layout = () => {
             {/* Login Button */}
             <div className="hidden lg:flex items-center space-x-4">
               <Button
-                onClick={() => setIsLoginOpen(true)}
+               
                 className="bg-ahiti-secondary text-ahiti-primary hover:bg-ahiti-secondary/90 font-semibold"
               >
                 <LogIn className="w-4 h-4 mr-2" />
-                Portal Login
+                  <Link to={BASE_API}>Portal Login</Link>
               </Button>
+               
             </div>
 
             {/* Mobile Menu Button */}
@@ -171,14 +174,11 @@ const Layout = () => {
                 </div>
               ))}
               <Button
-                onClick={() => {
-                  setIsMenuOpen(false)
-                  setIsLoginOpen(true)
-                }}
-                className="w-full bg-ahiti-primary text-white hover:bg-ahiti-dark mt-4"
+             
+                className="bg-ahiti-secondary text-ahiti-primary hover:bg-ahiti-secondary/90 font-semibold"
               >
                 <LogIn className="w-4 h-4 mr-2" />
-                Portal Login
+                  <Link to={BASE_API}>Portal Login</Link>
               </Button>
             </div>
           </div>
@@ -261,7 +261,7 @@ const Layout = () => {
       </footer>
 
       {/* Login Portal Modal */}
-      <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+      {/* <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-ahiti-primary text-2xl">Portal Login</DialogTitle>
@@ -296,7 +296,7 @@ const Layout = () => {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   )
 }
