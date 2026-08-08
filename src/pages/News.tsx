@@ -22,23 +22,46 @@ const News = () => {
   const ITEMS_PER_PAGE = 12
 
   // Fetch full article when a news card is clicked
-  const BASE_API = import.meta.env.VITE_BASE_API_URL ;
   async function handleNewsClick(newsItem: NewsArticle) {
+    console.log('🔍 Fetching full article for:', newsItem.slug);
     try {
+      const BASE_API = import.meta.env.VITE_BASE_API_URL || 'http://localhost:3000';
+      const API_KEY = import.meta.env.VITE_API_KEY || '';
+      const apiUrl = `${BASE_API}/api/news?slug=${encodeURIComponent(newsItem.slug)}`;
       
-      const apiUrl = `${BASE_API}/api/news`
+      console.log('📡 API URL:', apiUrl);
+      console.log('🔑 API Key present:', !!API_KEY);
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (API_KEY) {
+        headers['X-API-Key'] = API_KEY;
+      }
+      
       // Fetch full article by slug to get the content
-      const response = await fetch(`${apiUrl}?slug=${newsItem.slug}`);
+      const response = await fetch(apiUrl, { headers });
+      
+      console.log('📥 Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('📦 Response data:', data);
       
       if (data.success && data.data) {
+        console.log('✅ Full article loaded, content length:', data.data.content?.length || 0);
         setSelectedNews(data.data);
       } else {
+        console.warn('⚠️ API returned success=false, using fallback');
         // Fallback to the list item (without full content)
         setSelectedNews(newsItem);
       }
     } catch (error) {
-      console.error('Failed to fetch full article:', error);
+      console.error('❌ Failed to fetch full article:', error);
       // Fallback to the list item
       setSelectedNews(newsItem);
     }
@@ -432,14 +455,19 @@ const News = () => {
                 {/* Body */}
                 <div className="prose prose-gray max-w-none">
                   {selectedNews.content ? (
-                    selectedNews.content.split('\n\n').map((paragraph: string, idx: number) => (
-                      <p key={idx} className="text-gray-600 mb-4 whitespace-pre-line">
-                        {paragraph}
-                      </p>
-                    ))
-                  ) : (
+                    <div 
+                      className="text-gray-600 space-y-4"
+                      dangerouslySetInnerHTML={{ 
+                        __html: selectedNews.content.replace(/\n\n/g, '</p><p class="mb-4">').replace(/^/, '<p class="mb-4">').replace(/$/, '</p>')
+                      }}
+                    />
+                  ) : selectedNews.excerpt ? (
                     <p className="text-gray-600 mb-4">
-                      {selectedNews.excerpt || 'No content available.'}
+                      {selectedNews.excerpt}
+                    </p>
+                  ) : (
+                    <p className="text-gray-500 italic mb-4">
+                      No content available. Click "Read original article" below to view the full story.
                     </p>
                   )}
                 </div>
